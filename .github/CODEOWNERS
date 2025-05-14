@@ -1,0 +1,11 @@
+# Ce fichier définit les propriétaires du code qui seront automatiquement assignés pour la revue
+
+# Propriétaires par défaut pour tout le dépôt
+* @tiboumehdi
+
+# Propriétaires spécifiques pour certains fichiers ou dossiers
+/app.py @tiboumehdi
+/templates/ @tiboumehdi
+
+# Vous pouvez également attribuer plusieurs personnes ou équipes
+/requirements.txt @tiboumehdi
