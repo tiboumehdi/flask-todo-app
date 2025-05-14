@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Todo App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .task-content {
+            flex: 1;
+            word-break: break-word;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #7f8c8d;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .actions a {
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+        }
+        .edit {
+            background: #f39c12;
+        }
+        .edit:hover {
+            background: #e67e22;
+        }
+        .delete {
+            background: #e74c3c;
+        }
+        .delete:hover {
+            background: #c0392b;
+        }
+        .complete {
+            background: #2ecc71;
+        }
+        .complete:hover {
+            background: #27ae60;
+        }
+        .uncomplete {
+            background: #95a5a6;
+        }
+        .uncomplete:hover {
+            background: #7f8c8d;
+        }
+        .no-tasks {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Flask Todo App</h1>
+        
+        <form action="/" method="POST">
+            <input type="text" name="content" id="content" placeholder="Add a new task..." required>
+            <button type="submit">Add Task</button>
+        </form>
+
+        {% if tasks|length < 1 %}
+        <div class="no-tasks">
+            <p>No tasks yet. Add one above!</p>
+        </div>
+        {% else %}
+        <table>
+            <tr>
+                <th>Task</th>
+                <th>Added</th>
+                <th>Actions</th>
+            </tr>
+            {% for task in tasks %}
+            <tr>
+                <td class="task-content {% if task.completed %}completed{% endif %}">{{ task.content }}</td>
+                <td>{{ task.date_created.strftime('%Y-%m-%d') }}</td>
+                <td class="actions">
+                    <a class="edit" href="/update/{{ task.id }}">Edit</a>
+                    <a class="delete" href="/delete/{{ task.id }}">Delete</a>
+                    {% if task.completed %}
+                    <a class="uncomplete" href="/complete/{{ task.id }}">Undo</a>
+                    {% else %}
+                    <a class="complete" href="/complete/{{ task.id }}">Complete</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>

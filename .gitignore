@@ -1,0 +1,37 @@
+# Environnement virtuel Python
+venv/
+env/
+ENV/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Base de données SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Fichiers de configuration locale
+instance/
+.webassets-cache
+
+# Fichiers de logs
+*.log
+
+# Fichiers d'environnement
+.env
+.flaskenv
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers d'IDE
+.idea/
+.vscode/
+*.swp
+*.swo
