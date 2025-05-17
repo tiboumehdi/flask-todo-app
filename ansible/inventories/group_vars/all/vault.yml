@@ -1,0 +1,35 @@
+---
+# Variables secrètes pour tous les environnements (chiffrées avec ansible-vault)
+# Pour créer ce fichier: ansible-vault create ansible/group_vars/all/vault.yml
+# Pour éditer ce fichier: ansible-vault edit ansible/group_vars/all/vault.yml
+# File: ansible/group_vars/all/vault.yml
+
+# Ne pas committer ce fichier déchiffré dans Git!
+
+# Informations d'authentification pour le registry Docker
+registry_username: "votre-username-github"
+registry_password: "ghp_your_personal_access_token"
+
+# Clés SSH pour le déploiement
+deploy_ssh_private_key: |
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+  NhAAAAAwEAAQAAAYEAvHj7o9...
+  -----END OPENSSH PRIVATE KEY-----
+
+deploy_ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAA... deploy@example.com"
+
+# Utilisateur et mot de passe pour la base de données (si nécessaire)
+db_user: "flask_todo_user"
+db_password: "change_this_secure_password"
+
+# Secret key pour Flask
+flask_secret_key: "change_this_very_secure_secret_key_for_flask_app"
+
+# Clés API pour les services externes (si nécessaire)
+api_key_monitoring: "your_monitoring_api_key"
+api_key_logging: "your_logging_api_key"
+
+# Variables de messagerie (si nécessaire)
+smtp_user: "notifications@example.com"
+smtp_password: "change_this_smtp_password"

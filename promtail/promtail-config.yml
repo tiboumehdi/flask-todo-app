@@ -1,0 +1,55 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: flask-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: flask-todo
+          app: flask-todo
+          environment: production
+          __path__: /var/log/app/*.log
+
+  - job_name: flask-stdout
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: flask-todo
+          app: flask-todo
+          environment: production
+          __path__: /var/log/app/stdout/*.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            logger: logger
+            message: message
+            module: module
+            function: function
+            line: line
+            host: host
+            application: application
+
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+      - labels:
+          level:
+          logger:
+          module:
+          function:
+          host:
+          application:

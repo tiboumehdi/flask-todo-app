@@ -1,0 +1,52 @@
+---
+# Variables communes à tous les environnements
+# File: ansible/group_vars/all/vars.yml
+
+# Application Flask Todo
+app_name: "flask-todo"
+app_user: "flask"
+app_group: "flask"
+app_uid: 3000
+app_gid: 3000
+
+# Configuration Docker
+docker_version: "24.0.5"
+docker_compose_version: "2.20.3"
+docker_users:
+  - "{{ app_user }}"
+  - "{{ ansible_user }}"
+
+# Configuration réseau
+app_port: 8080
+healthcheck_endpoint: "/health"
+healthcheck_interval: "30s"
+healthcheck_timeout: "10s"
+healthcheck_retries: 3
+network_name: "flask_network"
+
+# Configuration des volumes
+data_path: "/opt/{{ app_name }}"
+log_path: "/var/log/{{ app_name }}"
+config_path: "{{ data_path }}/config"
+backup_path: "{{ data_path }}/backups"
+
+# Configuration du conteneur
+container_options:
+  memory: "512m"
+  cpus: "0.5"
+  restart_policy: "unless-stopped"
+
+# Options de sécurité
+firewall_allowed_tcp_ports:
+  - 22   # SSH
+  - 80   # HTTP
+  - 443  # HTTPS
+
+# Configuration des sauvegardes
+backup_enabled: true
+backup_retention_days: 7
+backup_schedule: "0 2 * * *"  # Tous les jours à 2h du matin
+
+# Configuration du monitoring
+monitoring_enabled: true
+prometheus_node_exporter_version: "1.5.0"

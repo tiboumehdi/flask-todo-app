@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Configuration des alertes
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Règles d'alerte
+rule_files:
+  # - "alerts.yml"
+
+# Configuration des jobs de scrape
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "flask-todo"
+    scrape_interval: 5s
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["app:9090"]
+        labels:
+          instance: "flask-todo"
+          environment: "production"
+          app: "flask-todo"

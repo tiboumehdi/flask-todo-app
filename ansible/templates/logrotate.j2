@@ -1,0 +1,16 @@
+# Configuration de rotation des logs pour Flask Todo App
+# Template: templates/logrotate.j2
+
+{{ log_path }}/*.log {
+    daily
+    rotate {{ backup_retention_days | default(7) }}
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 {{ app_user }} {{ app_group }}
+    sharedscripts
+    postrotate
+        systemctl restart {{ app_name }} >/dev/null 2>&1 || true
+    endscript
+}

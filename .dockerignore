@@ -1,0 +1,44 @@
+# Environnements virtuels
+venv/
+env/
+ENV/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Base de données
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers Git
+.git/
+.gitignore
+.github/
+
+# Fichiers Docker
+.dockerignore
+
+# Documentation et fichiers de test
+docs/
+tests/
+*.md
+!README.md
+
+# Fichiers d'IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

@@ -1,0 +1,38 @@
+---
+# Inventory for production environment
+# File: ansible/inventories/production.yml
+
+all:
+  vars:
+    ansible_user: deploy
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_become: yes
+    ansible_become_method: sudo
+    environment: production
+    enable_monitoring: true
+    enable_backup: true
+    public_port: 80
+    memory_limit: "1g"
+    cpu_limit: "1.0"
+
+flask_todo_servers:
+  hosts:
+    production-app-1:
+      ansible_host: prod-app-1.example.com
+      ansible_port: 22
+    production-app-2:
+      ansible_host: prod-app-2.example.com
+      ansible_port: 22
+  vars:
+    flask_todo_image: "ghcr.io/votre-nom-utilisateur/flask-todo-app:latest"
+    network_name: "prod_network"
+
+lb_servers:
+  hosts:
+    production-lb-1:
+      ansible_host: prod-lb-1.example.com
+      ansible_port: 22
+  vars:
+    backend_servers:
+      - prod-app-1.example.com
+      - prod-app-2.example.com

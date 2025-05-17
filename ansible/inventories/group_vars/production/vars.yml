@@ -1,0 +1,37 @@
+---
+# Variables pour l'environnement de production
+# File: ansible/group_vars/production/vars.yml
+
+# Configuration de l'environnement
+environment: "production"
+domain_name: "todo.example.com"
+enable_https: true
+
+# Configuration Docker
+registry_url: "ghcr.io"
+image_name: "votre-nom-utilisateur/flask-todo-app"
+image_tag: "latest"
+network_name: "prod_network"
+
+# Configuration des ressources
+container_options:
+  memory: "1g"
+  cpus: "1.0"
+  restart_policy: "always"
+
+# Configuration des ports
+public_port: 80
+https_port: 443
+
+# Configuration de la haute disponibilité
+loadbalancer_enabled: true
+replicas: 2
+
+# Configuration des sauvegardes
+backup_enabled: true
+backup_retention_days: 30
+backup_schedule: "0 2 * * *"  # Tous les jours à 2h du matin
+
+# Configuration du monitoring
+monitoring_enabled: true
+alerting_enabled: true

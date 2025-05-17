@@ -1,0 +1,17 @@
+# Variables par défaut
+# File: ansible/vars/default.yml
+
+packages:
+  - curl
+  - python3-pip
+  - logrotate
+
+python_packages:
+  - docker
+  - docker-compose
+
+python_executable: python3
+
+firewall_service: firewalld
+
+systemd_path: /usr/lib/systemd/system

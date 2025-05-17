@@ -1,0 +1,364 @@
+# Playbook Ansible pour le déploiement de Flask Todo App
+# Fichier: ansible/flask-todo-deploy.yml
+
+---
+- name: Deploy Flask Todo App
+  hosts: "{{ target_hosts | default(environment) }}"
+  become: yes
+  vars_files:
+    - "group_vars/all/vars.yml"
+    - "group_vars/{{ environment }}/vars.yml"
+    - "group_vars/all/vault.yml"
+
+  pre_tasks:
+    - name: Check for required variables
+      assert:
+        that:
+          - environment is defined
+          - registry_url is defined
+          - image_name is defined
+          - image_tag is defined
+          - app_user is defined
+        fail_msg: "Required variables are not defined"
+
+  tasks:
+    - name: Include OS-specific variables
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "vars/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "vars/{{ ansible_distribution }}.yml"
+        - "vars/{{ ansible_os_family }}.yml"
+        - "vars/default.yml"
+      ignore_errors: yes
+      tags: always
+
+    - name: Create app user and group
+      block:
+        - name: Create app group
+          group:
+            name: "{{ app_group }}"
+            gid: "{{ app_gid }}"
+            state: present
+
+        - name: Create app user
+          user:
+            name: "{{ app_user }}"
+            uid: "{{ app_uid }}"
+            group: "{{ app_group }}"
+            shell: /bin/bash
+            create_home: yes
+            home: "/home/{{ app_user }}"
+            comment: "User for running {{ app_name }} application"
+      tags: 
+        - setup
+        - user
+
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0755"
+      loop:
+        - "{{ data_path }}"
+        - "{{ log_path }}"
+        - "{{ config_path }}"
+        - "{{ backup_path }}"
+      tags:
+        - setup
+        - directories
+
+    - name: Install Docker
+      block:
+        - name: Install required packages for apt repositories
+          apt:
+            name:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - gnupg-agent
+              - software-properties-common
+              - python3-pip
+            state: present
+            update_cache: yes
+
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+            state: present
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: deb [arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+            state: present
+            filename: docker
+
+        - name: Install Docker packages
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+            state: present
+            update_cache: yes
+
+        - name: Install Python Docker module
+          pip:
+            name:
+              - docker
+              - docker-compose
+            state: present
+
+        - name: Ensure Docker service is running
+          systemd:
+            name: docker
+            state: started
+            enabled: yes
+
+        - name: Add users to Docker group
+          user:
+            name: "{{ item }}"
+            groups: docker
+            append: yes
+          loop: "{{ docker_users }}"
+      tags:
+        - setup
+        - docker
+
+    - name: Configure firewall
+      block:
+        - name: Install UFW
+          apt:
+            name: ufw
+            state: present
+
+        - name: Allow SSH connections
+          ufw:
+            rule: allow
+            name: OpenSSH
+            state: enabled
+
+        - name: Allow required ports
+          ufw:
+            rule: allow
+            port: "{{ item }}"
+            proto: tcp
+          loop: "{{ firewall_allowed_tcp_ports }}"
+
+        - name: Allow application port
+          ufw:
+            rule: allow
+            port: "{{ public_port }}"
+            proto: tcp
+
+        - name: Enable UFW
+          ufw:
+            state: enabled
+            policy: deny
+      tags:
+        - setup
+        - security
+        - firewall
+
+    - name: Configure Docker access to registry
+      block:
+        - name: Create Docker config directory
+          file:
+            path: "/home/{{ app_user }}/.docker"
+            state: directory
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+            mode: "0700"
+
+        - name: Set up Docker registry authentication
+          copy:
+            dest: "/home/{{ app_user }}/.docker/config.json"
+            content: |
+              {
+                "auths": {
+                  "{{ registry_url }}": {
+                    "auth": "{{ (registry_username + ':' + registry_password) | b64encode }}"
+                  }
+                }
+              }
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+            mode: "0600"
+      when: registry_username is defined and registry_password is defined
+      tags:
+        - docker
+        - registry
+
+    - name: Create Docker network
+      docker_network:
+        name: "{{ network_name }}"
+        state: present
+      tags:
+        - docker
+        - network
+
+    - name: Create application environment file
+      template:
+        src: templates/flask-env.j2
+        dest: "{{ config_path }}/.env"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0644"
+      tags:
+        - config
+
+    - name: Pull the application image
+      docker_image:
+        name: "{{ registry_url }}/{{ image_name }}:{{ image_tag }}"
+        source: pull
+        force_source: yes
+      tags:
+        - docker
+        - deploy
+
+    - name: Stop and remove existing container
+      docker_container:
+        name: "{{ app_name }}"
+        state: absent
+      ignore_errors: yes
+      tags:
+        - docker
+        - deploy
+
+    - name: Run the application container
+      docker_container:
+        name: "{{ app_name }}"
+        image: "{{ registry_url }}/{{ image_name }}:{{ image_tag }}"
+        state: started
+        restart_policy: "{{ container_options.restart_policy }}"
+        recreate: yes
+        pull: yes
+        env_file: "{{ config_path }}/.env"
+        published_ports:
+          - "{{ public_port }}:{{ app_port }}"
+        volumes:
+          - "{{ data_path }}/data:/app/data"
+          - "{{ log_path }}:/var/log/flask-todo"
+        networks:
+          - name: "{{ network_name }}"
+        memory: "{{ container_options.memory }}"
+        cpus: "{{ container_options.cpus }}"
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:{{ app_port }}{{ healthcheck_endpoint }}"]
+          interval: "{{ healthcheck_interval }}"
+          timeout: "{{ healthcheck_timeout }}"
+          retries: "{{ healthcheck_retries }}"
+          start_period: "5s"
+        labels:
+          app: "{{ app_name }}"
+          environment: "{{ environment }}"
+          version: "{{ image_tag }}"
+      tags:
+        - docker
+        - deploy
+
+    - name: Wait for application to be healthy
+      uri:
+        url: "http://localhost:{{ public_port }}{{ healthcheck_endpoint }}"
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 12
+      delay: 5
+      tags:
+        - deploy
+        - verification
+
+    - name: Set up backup if enabled
+      block:
+        - name: Create backup script
+          template:
+            src: templates/backup.sh.j2
+            dest: "{{ data_path }}/backup.sh"
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+            mode: "0755"
+
+        - name: Set up backup cron job
+          cron:
+            name: "{{ app_name }} Backup"
+            job: "{{ data_path }}/backup.sh"
+            cron_file: "{{ app_name }}_backup"
+            user: "{{ app_user }}"
+            minute: "{{ backup_schedule.split(' ')[0] }}"
+            hour: "{{ backup_schedule.split(' ')[1] }}"
+            day: "{{ backup_schedule.split(' ')[2] }}"
+            month: "{{ backup_schedule.split(' ')[3] }}"
+            weekday: "{{ backup_schedule.split(' ')[4] }}"
+      when: backup_enabled | bool
+      tags:
+        - backup
+
+    - name: Set up monitoring if enabled
+      block:
+        - name: Install Prometheus Node Exporter
+          apt:
+            name: prometheus-node-exporter
+            state: present
+
+        - name: Configure Node Exporter
+          template:
+            src: templates/node_exporter.j2
+            dest: /etc/default/prometheus-node-exporter
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Enable and start Node Exporter
+          systemd:
+            name: prometheus-node-exporter
+            state: started
+            enabled: yes
+      when: monitoring_enabled | bool
+      tags:
+        - monitoring
+
+    - name: Configure log rotation
+      template:
+        src: templates/logrotate.j2
+        dest: "/etc/logrotate.d/{{ app_name }}"
+        owner: root
+        group: root
+        mode: "0644"
+      tags:
+        - logs
+
+    - name: Log deployment
+      lineinfile:
+        path: "{{ log_path }}/deployment.log"
+        line: "[{{ ansible_date_time.iso8601 }}] Deployed {{ registry_url }}/{{ image_name }}:{{ image_tag }} to {{ inventory_hostname }}"
+        create: yes
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0644"
+      tags:
+        - deploy
+        - logs
+
+  post_tasks:
+    - name: Verify deployment
+      uri:
+        url: "http://localhost:{{ public_port }}"
+        status_code: 200
+      register: response
+      failed_when: response.status != 200
+      tags:
+        - verification
+
+    - name: Deployment summary
+      debug:
+        msg: |
+          Flask Todo App deployment summary:
+          - Environment: {{ environment }}
+          - Server: {{ inventory_hostname }}
+          - Image: {{ registry_url }}/{{ image_name }}:{{ image_tag }}
+          - Port: {{ public_port }}
+          - Status: Successfully deployed
+      tags:
+        - always

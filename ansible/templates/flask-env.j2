@@ -1,0 +1,30 @@
+# Configuration pour Flask Todo App
+# Modèle de fichier d'environnement
+# Template: templates/flask-env.j2
+
+# Configuration de l'application
+FLASK_ENV={{ environment }}
+PORT={{ app_port }}
+FLASK_APP=app.py
+FLASK_DEBUG={{ 1 if environment == 'development' or environment == 'staging' else 0 }}
+
+# Connexion à la base de données
+SQLALCHEMY_DATABASE_URI=sqlite:////app/data/todo.db
+
+# Clé secrète Flask
+FLASK_SECRET_KEY={{ flask_secret_key }}
+
+# Options de journalisation
+LOG_LEVEL={{ 'DEBUG' if environment == 'development' or environment == 'staging' else 'INFO' }}
+LOG_DIR=/var/log/flask-todo
+
+# Options de sécurité
+{% if enable_https %}
+ENABLE_HTTPS=true
+{% else %}
+ENABLE_HTTPS=false
+{% endif %}
+
+# Informations sur l'environnement
+ENVIRONMENT={{ environment }}
+DOMAIN_NAME={{ domain_name }}

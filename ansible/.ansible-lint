@@ -1,0 +1,57 @@
+# Configuration Ansible Lint pour Flask Todo App
+# File: ansible/.ansible-lint
+
+---
+# Liste des règles désactivées
+skip_list:
+  # Règles désactivées par choix
+  - 'yaml'  # Ignorer les erreurs YAML mineures
+  - 'role-name'  # Ignorer les règles de nommage des rôles
+  - 'no-changed-when'  # Acceptable pour certaines tâches
+
+# Exclusions spécifiques
+exclude_paths:
+  - .git/
+  - .github/
+  - venv/
+  - '*/files/'
+  - '*/vars/'
+
+# Règles activées spécifiquement
+enable_list:
+  - 'fqcn'  # Utiliser des noms de modules complets
+  - 'no-jinja-nesting'  # Éviter Jinja trop imbriqué
+  - 'no-tabs'  # Ne pas utiliser de tabs
+
+# Configuration des fichiers ignorés
+ignore_files:
+  - 'inventory.yml'
+
+# Verbosité
+verbosity: 1
+
+# Réglage de sévérité pour certaines règles
+warn_list:
+  - 'no-handler'  # Avertir mais ne pas échouer pour les tâches sans handlers
+  - 'command-instead-of-module'  # Avertir pour l'utilisation des commandes shell
+
+# Utiliser les règles par défaut
+use_default_rules: true
+
+# Parsers supplémentaires à utiliser
+parseable: true
+
+# Format de sortie
+format: rich
+
+# Configuration de la règle de longueur de ligne
+line_length:
+  max: 160
+  allow_non_breakable_words: true
+  allow_non_breakable_inline_mappings: true
+
+# Tags à vérifier spécifiquement
+tags:
+  - idempotency
+  - security
+  - performance

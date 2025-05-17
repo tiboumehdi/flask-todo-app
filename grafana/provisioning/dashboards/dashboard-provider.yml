@@ -1,0 +1,14 @@
+
+apiVersion: 1
+
+providers:
+  - name: 'Flask Todo App'
+    org_id: 1
+    folder: 'Flask Applications'
+    folderUid: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/

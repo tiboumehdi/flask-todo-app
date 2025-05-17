@@ -1,0 +1,20 @@
+# Configuration du Node Exporter Prometheus
+# Template: templates/node_exporter.j2
+
+# Options supplémentaires pour le node exporter
+ARGS="--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|run)($|/) \
+      --collector.filesystem.ignored-fs-types=^(sys|proc|auto|tmpfs)fs$ \
+      --collector.textfile.directory=/var/lib/node_exporter/textfile_collector \
+      --collector.systemd \
+      --collector.processes \
+      --web.listen-address=:9100 \
+      --log.level=info"
+
+# Répertoire pour les métriques personnalisées
+if [ ! -d "/var/lib/node_exporter/textfile_collector" ]; then
+  mkdir -p /var/lib/node_exporter/textfile_collector
+  chown nobody:nogroup /var/lib/node_exporter/textfile_collector
+fi
+
+# Ajouter les métriques de l'application
+echo "{{ app_name }}_info{version=\"{{ image_tag }}\",environment=\"{{ environment }}\",hostname=\"{{ inventory_hostname }}\"} 1" > /var/lib/node_exporter/textfile_collector/{{ app_name }}.prom

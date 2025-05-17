@@ -1,0 +1,35 @@
+---
+# Variables pour l'environnement de staging
+# File: ansible/group_vars/staging/vars.yml
+
+# Configuration de l'environnement
+environment: "staging"
+domain_name: "staging.todo.example.com"
+enable_https: false
+
+# Configuration Docker
+registry_url: "ghcr.io"
+image_name: "votre-nom-utilisateur/flask-todo-app"
+image_tag: "develop"
+network_name: "staging_network"
+
+# Configuration des ressources
+container_options:
+  memory: "512m"
+  cpus: "0.5"
+  restart_policy: "unless-stopped"
+
+# Configuration des ports
+public_port: 8080
+https_port: 8443
+
+# Configuration de la haute disponibilité
+loadbalancer_enabled: false
+replicas: 1
+
+# Configuration des sauvegardes
+backup_enabled: false
+
+# Configuration du monitoring
+monitoring_enabled: true
+alerting_enabled: false
